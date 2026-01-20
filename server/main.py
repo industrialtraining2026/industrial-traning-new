@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
 import json
@@ -19,11 +20,13 @@ from .notification.student_parser import StudentEmailParser
 from .notification.email_sender import EmailSender
 from .notification.scheduler import NotificationScheduler
 
-# Configure logging
+
+# logging & constants
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 TEACHER_ID = "admin"
 TEACHER_PASSWORD = "admin123@"
+
 
 # Global instances
 indexer = None
@@ -33,12 +36,12 @@ pdf_manager = None
 pdf_metadata_manager = None
 notification_scheduler = None
 
-# Simple user storage (for demo - in production use proper database)
+
+# Users file helpers
 USERS_FILE = Path(__file__).parent.parent / "data" / "users.json"
 USERS_FILE.parent.mkdir(exist_ok=True)
 
 def load_users():
-    """Load users from JSON file"""
     if USERS_FILE.exists():
         try:
             with open(USERS_FILE, 'r') as f:
@@ -48,11 +51,9 @@ def load_users():
     return {}
 
 def save_users(users):
-    """Save users to JSON file"""
     with open(USERS_FILE, 'w') as f:
         json.dump(users, f, indent=2)
 
-# Initialize with demo user
 def init_users():
     users = load_users()
     if not users:
@@ -65,32 +66,19 @@ def init_users():
         save_users(users)
     return users
 
+
+# FastAPI lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     global indexer, retriever, llm_client, pdf_manager, pdf_metadata_manager, notification_scheduler
-    
     logger.info("Starting up Industrial Training Chatbot...")
-    
-    # Initialize users storage
     init_users()
-    
-    # Initialize components
     indexer = DocumentIndexer()
     retriever = DocumentRetriever(indexer)
-    # Priority: Groq > Google > OpenAI > local
     try:
         if settings.GROQ_API_KEY:
             llm_client = LLMClient(use_groq=True)
-            # Check if Groq actually initialized (might have fallen back)
-            if llm_client.use_groq and llm_client.groq_client:
-                logger.info("Using Groq (Llama)")
-            elif llm_client.use_google:
-                logger.info("Groq failed, using Google AI (Gemini) as fallback")
-            elif llm_client.api_key:
-                logger.info("Groq failed, using OpenAI as fallback")
-            else:
-                logger.info("Groq failed, using local fallback")
+            logger.info("Using Groq (Llama)")
         elif settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY != "PUT_YOUR_GOOGLE_API_KEY_HERE":
             llm_client = LLMClient(use_google=True)
             logger.info("Using Google AI (Gemini)")
@@ -99,31 +87,42 @@ async def lifespan(app: FastAPI):
             logger.info("Using OpenAI or local fallback")
     except Exception as e:
         logger.error(f"Error initializing LLM client: {str(e)}")
-        # Fallback to basic client
         llm_client = LLMClient(use_google=False)
         logger.info("Using local fallback due to initialization error")
     
-    # Initialize teacher PDF management
     pdf_manager = PDFManager()
     pdf_metadata_manager = PDFMetadataManager()
     logger.info("Teacher PDF management initialized")
     
-    # Initialize notification scheduler
     notification_scheduler = NotificationScheduler()
     notification_scheduler.start()
     logger.info("Notification scheduler initialized and started")
     
-    # Index documents on startup (only chatbot PDFs for backward compatibility)
     logger.info(f"Indexing chatbot documents from: {settings.PDF_FOLDER}")
     index_result = indexer.index_directory(settings.PDF_FOLDER, pdf_type="chatbot")
     logger.info(f"Indexing complete: {index_result}")
     
     yield
     
-    # Shutdown
     if notification_scheduler:
         notification_scheduler.stop()
     logger.info("Shutting down...")
+
+
+# FastAPI app init
+app = FastAPI(title="Industrial Training FIST Chatbot", lifespan=lifespan)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+app.mount("/", StaticFiles(directory="web", html=True), name="web")
 
 
 class ChatRequest(BaseModel):
