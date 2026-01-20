@@ -121,8 +121,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-WEB_DIR = Path(__file__).parent.parent / "web"
-app.mount("/", StaticFiles(directory="web", html=True), name="web")
 
 
 class ChatRequest(BaseModel):
