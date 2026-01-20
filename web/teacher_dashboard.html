@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard - PDF Management</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .teacher-dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      color: #111827;
+      font-weight: 700;
+      margin: 0;
+      text-align: center;
+    }
+    
+    .logout-btn {
+      position: absolute;
+      right: 0;
+      padding: 8px 16px;
+      background: #dc2626;
+      color: white;
+      border: 2px solid #991b1b;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .logout-btn:hover {
+      background: #b91c1c;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .tab-btn {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: #6b7280;
+      transition: all 0.3s;
+    }
+    
+    .tab-btn:hover {
+      color: #111827;
+    }
+    
+    .tab-btn.active {
+      color: #111827;
+      border-bottom-color: #111827;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .upload-section {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .upload-area:hover {
+      border-color: #111827;
+      background: #f9fafb;
+    }
+    
+    .upload-area.dragover {
+      border-color: #111827;
+      background: #f3f4f6;
+    }
+    
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    
+    .upload-text {
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+    
+    .browse-btn {
+      padding: 10px 20px;
+      background: #111827;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    
+    .browse-btn:hover {
+      background: #374151;
+    }
+    
+    #file-input {
+      display: none;
+    }
+    
+    .pdf-list {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .pdf-list-header {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #111827;
+    }
+    
+    .pdf-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .pdf-table th,
+    .pdf-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .pdf-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    .pdf-table tr:hover {
+      background: #f9fafb;
+    }
+    
+    .delete-btn {
+      padding: 6px 12px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .delete-btn:hover {
+      background: #b91c1c;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+    
+    .message {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .message.success {
+      background: #d1fae5;
+      color: #065f46;
+      display: block;
+    }
+    
+    .message.error {
+      background: #fee2e2;
+      color: #991b1b;
+      display: block;
+    }
+    
+    .file-name-display {
+      margin-top: 15px;
+      color: #374151;
+      font-weight: 500;
+    }
+    
+    .status-success {
+      color: #059669;
+      font-weight: 600;
+    }
+    
+    .status-failed {
+      color: #dc2626;
+      font-weight: 600;
+    }
+    
+    .status-pending {
+      color: #6b7280;
+      font-weight: 500;
+    }
+    
+    .file-list-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
+    .file-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 200px;
+    }
+    
+    .file-item-name {
+      flex: 1;
+      font-weight: 500;
+      color: #111827;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .file-item-actions {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .view-btn {
+      padding: 4px 8px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .view-btn:hover {
+      background: #2563eb;
+    }
+    
+    .file-list-empty {
+      color: #9ca3af;
+      padding: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="teacher-dashboard">
+    <div class="header">
+      <a href="home.html" class="back-btn" style="position: absolute; left: 0;">← Back</a>
+      <h1>Teacher Dashboard - PDF Management</h1>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('chatbot')">Chatbot PDFs</button>
+      <button class="tab-btn" onclick="switchTab('submission')">Verification CV/Resume PDFs</button>
+      <button class="tab-btn" onclick="switchTab('notification')">Notification PDFs</button>
+    </div>
+    
+    <!-- Chatbot PDF Tab -->
+    <div id="chatbot-tab" class="tab-content active">
+      <div class="upload-section">
+        <h2>Upload Chatbot PDF</h2>
+        <p style="color: #6b7280; margin-bottom: 20px;">Upload PDF files that will be used as knowledge base for the chatbot.</p>
+        <div class="upload-area" id="chatbot-upload-area">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Choose a file or drag & drop it here</div>
+          <div style="font-size: 12px; color: #9ca3af;">PDF format only, up to 50MB</div>
+        </div>
+        <input type="file" id="chatbot-file-input" accept=".pdf">
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="browse-btn" onclick="document.getElementById('chatbot-file-input').click()">Browse File</button>
+          <button class="browse-btn" id="chatbot-upload-btn" onclick="handleManualUpload('chatbot')" style="background: #059669;">Upload</button>
+        </div>
+        <div id="chatbot-file-name" class="file-name-display"></div>
+      </div>
+      
+      <!-- File List Section -->
+      <div class="pdf-list" style="margin-bottom: 20px;">
+        <div class="pdf-list-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="chatbot-pdf-count">Chatbot PDF Files</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="browse-btn" onclick="rebuildFAISSIndex('chatbot')" style="background: #059669; color: white; border: none;">Rebuild FAISS Index</button>
+          </div>
+        </div>
+        <div id="chatbot-file-list" class="file-list-container">
+          <!-- Files will be listed here -->
+        </div>
+      </div>
+      
+      <!-- Status Table Section -->
+      <div class="pdf-list">
+        <div class="pdf-list-header">
+          <span>Operation Status</span>
+        </div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Size</th>
+              <th>Upload Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="chatbot-pdf-list">
+            <tr>
+              <td colspan="5" class="empty-state">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Submission PDF Tab -->
+    <div id="submission-tab" class="tab-content">
+      <div class="upload-section">
+        <h2>Upload Verification CV/Resume PDF</h2>
+        <p style="color: #6b7280; margin-bottom: 20px;">Upload PDF files that will be used as reference for CV checking.</p>
+        <div class="upload-area" id="submission-upload-area">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Choose a file or drag & drop it here</div>
+          <div style="font-size: 12px; color: #9ca3af;">PDF format only, up to 50MB</div>
+        </div>
+        <input type="file" id="submission-file-input" accept=".pdf">
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="browse-btn" onclick="document.getElementById('submission-file-input').click()">Browse File</button>
+          <button class="browse-btn" id="submission-upload-btn" onclick="handleManualUpload('submission')" style="background: #059669;">Upload</button>
+        </div>
+        <div id="submission-file-name" class="file-name-display"></div>
+      </div>
+      
+      <!-- File List Section -->
+      <div class="pdf-list" style="margin-bottom: 20px;">
+        <div class="pdf-list-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="submission-pdf-count">Verification CV/Resume PDF Files</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="browse-btn" onclick="rebuildFAISSIndex('submission')" style="background: #059669; color: white; border: none;">Rebuild FAISS Index</button>
+          </div>
+        </div>
+        <div id="submission-file-list" class="file-list-container">
+          <!-- Files will be listed here -->
+        </div>
+      </div>
+      
+      <!-- Status Table Section -->
+      <div class="pdf-list">
+        <div class="pdf-list-header">
+          <span>Operation Status</span>
+        </div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Size</th>
+              <th>Upload Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="submission-pdf-list">
+            <tr>
+              <td colspan="5" class="empty-state">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Student Submissions Section -->
+      <div class="pdf-list" style="margin-top: 20px;">
+        <div class="pdf-list-header">
+          <span id="student-submission-pdf-count">Student Submission CV/Resume PDFs</span>
+        </div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Student ID</th>
+              <th>Upload Time</th>
+              <th>Size</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="student-submission-pdf-list">
+            <tr>
+              <td colspan="5" class="empty-state">No student submissions yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Notification PDF Tab -->
+    <div id="notification-tab" class="tab-content">
+      <div class="upload-section">
+        <h2>Upload Notification PDF</h2>
+        <p style="color: #6b7280; margin-bottom: 20px;">Upload PDF files containing deadline information for notifications.</p>
+        <div class="upload-area" id="notification-upload-area">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Choose a file or drag & drop it here</div>
+          <div style="font-size: 12px; color: #9ca3af;">PDF format only, up to 50MB</div>
+        </div>
+        <input type="file" id="notification-file-input" accept=".pdf">
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+          <button class="browse-btn" onclick="document.getElementById('notification-file-input').click()">Browse File</button>
+          <button class="browse-btn" id="notification-upload-btn" onclick="handleManualUpload('notification')" style="background: #059669;">Upload</button>
+        </div>
+        <div id="notification-file-name" class="file-name-display"></div>
+      </div>
+      
+      <div class="pdf-list">
+        <div class="pdf-list-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span id="notification-pdf-count">Notification PDF Files</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="browse-btn" onclick="rebuildFAISSIndex('notification')" style="background: #059669; color: white; border: none;">Rebuild FAISS Index</button>
+          </div>
+        </div>
+        <table class="pdf-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Size</th>
+              <th>Upload Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="notification-pdf-list">
+            <tr>
+              <td colspan="5" class="empty-state">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <script src="teacher_dashboard.js"></script>
+</body>
+</html>
+
