@@ -24,7 +24,7 @@ class EmailSender:
         self.smtp_password = os.getenv("SMTP_PASSWORD", "")
         self.from_email = os.getenv("FROM_EMAIL", self.smtp_username)
         self.from_name = os.getenv("FROM_NAME", "Industrial Training Office")
-	self.email_provider = os.getenv("EMAIL_PROVIDER", "smtp")
+
 
         
         # Log configuration (without exposing password)
@@ -353,4 +353,5 @@ Submission Deadline: {deadline_str}
         text += f"Best regards,\n{self.from_name}"
         
         return text
+
 
