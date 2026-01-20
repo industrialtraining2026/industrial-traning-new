@@ -1,0 +1,50 @@
+# Exclude from Render deployment
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (will be created at runtime on Render)
+data/**/*.pkl
+data/**/*.index
+data/**/*.pdf
+data/notifications/uploaded_email_files/*
+data/users.json
+
+# Local development files
+start.bat
+start.sh
+
+# Git files
+.git/
+.gitignore
+
+# Documentation (optional - can keep if small)
+# README.md
+
+# Test files
+test/
+tests/
+*.test.py
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
